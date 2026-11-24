@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { ticketUpdateSchema } from "@/lib/validation";
 import { canTransition } from "@/lib/workflow";
+import { bumpStatus } from "@/lib/counters";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -38,5 +39,6 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     where: { id },
     data: { status, priority, assigneeId },
   });
+  if (status) await bumpStatus(current.status, status);
   return NextResponse.json(ticket);
 }

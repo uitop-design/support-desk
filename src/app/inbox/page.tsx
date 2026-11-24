@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ticketListSchema, STATUSES, PRIORITIES } from "@/lib/validation";
 import { PriorityBadge, StatusBadge } from "@/components/Badges";
+import { getStatusCounts } from "@/lib/counters";
 
 export const dynamic = "force-dynamic";
 
@@ -22,7 +23,7 @@ export default async function InboxPage({ searchParams }: { searchParams: Search
     ...(f.q ? { subject: { contains: f.q, mode: "insensitive" } } : {}),
   };
 
-  const [tickets, agents] = await Promise.all([
+  const [tickets, agents, counts] = await Promise.all([
     prisma.ticket.findMany({
       where,
       include: { assignee: { select: { name: true } } },
@@ -31,11 +32,19 @@ export default async function InboxPage({ searchParams }: { searchParams: Search
       skip: (f.page - 1) * f.limit,
     }),
     prisma.agent.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+    getStatusCounts(),
   ]);
 
   return (
     <>
       <h1>Inbox</h1>
+      <div className="counters">
+        {STATUSES.map((s) => (
+          <Link key={s} href={`/inbox?status=${s}`} className={`counter ${f.status === s ? "active" : ""}`}>
+            <strong>{counts[s]}</strong> {s.toLowerCase()}
+          </Link>
+        ))}
+      </div>
       <form className="filters" method="get">
         <input name="q" placeholder="Search subject" defaultValue={f.q ?? ""} />
         <select name="status" defaultValue={f.status ?? ""}>

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/lib/validation";
 import { statusAfterComment } from "@/lib/workflow";
+import { bumpStatus } from "@/lib/counters";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -21,5 +22,6 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     prisma.comment.create({ data: { ticketId: id, body, authorType, agentId, internal } }),
     prisma.ticket.update({ where: { id }, data: { status: nextStatus } }),
   ]);
+  await bumpStatus(ticket.status, nextStatus);
   return NextResponse.json(comment, { status: 201 });
 }
