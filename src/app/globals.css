@@ -20,3 +20,17 @@ a { color: var(--brand); text-decoration: none; }
 .status-closed { background: #e5e7eb; color: #374151; }
 .prio-high { background: #ffedd5; color: #9a3412; }
 .prio-urgent { background: #fee2e2; color: #991b1b; }
+.ticket-layout { display: grid; grid-template-columns: 1fr 260px; gap: 24px; align-items: start; }
+.message { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 12px 16px; margin-bottom: 12px; }
+.message header { font-size: 0.85rem; color: var(--muted); display: flex; gap: 8px; align-items: center; }
+.message p { margin: 6px 0 0; white-space: pre-wrap; }
+.message.agent { border-left: 3px solid var(--brand); }
+.message.internal { background: #fffbeb; border-left-color: #f59e0b; }
+.panel { background: #fff; border: 1px solid var(--line); border-radius: 8px; padding: 16px; display: grid; gap: 12px; }
+.panel label { display: grid; gap: 4px; font-size: 0.85rem; color: var(--muted); }
+.panel select { padding: 6px; border: 1px solid var(--line); border-radius: 6px; font: inherit; }
+.reply textarea { width: 100%; padding: 10px; border: 1px solid var(--line); border-radius: 8px; font: inherit; }
+.reply.is-internal textarea { background: #fffbeb; }
+.reply-bar { display: flex; gap: 12px; align-items: center; justify-content: flex-end; margin-top: 8px; }
+.error { color: #b91c1c; font-size: 0.85rem; }
+@media (max-width: 800px) { .ticket-layout { grid-template-columns: 1fr; } }
