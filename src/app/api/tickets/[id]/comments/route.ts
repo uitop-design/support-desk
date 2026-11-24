@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/lib/validation";
 import { statusAfterComment } from "@/lib/workflow";
 import { bumpStatus } from "@/lib/counters";
+import { enqueueNotification } from "@/lib/notifications";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -11,7 +12,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
   const parsed = commentSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
 
-  const ticket = await prisma.ticket.findUnique({ where: { id }, select: { status: true } });
+  const ticket = await prisma.ticket.findUnique({
+    where: { id },
+    select: { status: true, number: true, subject: true, requesterEmail: true },
+  });
   if (!ticket) return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
   if (ticket.status === "CLOSED") return NextResponse.json({ error: "Ticket is closed" }, { status: 409 });
 
@@ -23,5 +27,14 @@ export async function POST(req: NextRequest, { params }: Ctx) {
     prisma.ticket.update({ where: { id }, data: { status: nextStatus } }),
   ]);
   await bumpStatus(ticket.status, nextStatus);
+  if (authorType === "AGENT" && !internal) {
+    await enqueueNotification({
+      type: "ticket.replied",
+      ticketId: id,
+      to: ticket.requesterEmail,
+      subject: `Re: [#${ticket.number}] ${ticket.subject}`,
+      text: body,
+    });
+  }
   return NextResponse.json(comment, { status: 201 });
 }

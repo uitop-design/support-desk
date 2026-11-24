@@ -3,6 +3,7 @@ import type { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { ticketCreateSchema, ticketListSchema } from "@/lib/validation";
 import { bumpStatus } from "@/lib/counters";
+import { enqueueNotification } from "@/lib/notifications";
 
 export async function GET(req: NextRequest) {
   const parsed = ticketListSchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
@@ -41,5 +42,12 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   const ticket = await prisma.ticket.create({ data: parsed.data });
   await bumpStatus(null, ticket.status);
+  await enqueueNotification({
+    type: "ticket.created",
+    ticketId: ticket.id,
+    to: ticket.requesterEmail,
+    subject: `[#${ticket.number}] ${ticket.subject}`,
+    text: "We received your request and will get back to you soon.",
+  });
   return NextResponse.json(ticket, { status: 201 });
 }
