@@ -30,3 +30,21 @@ export const ticketUpdateSchema = z
     assigneeId: z.string().min(1).nullable().optional(),
   })
   .refine((v) => Object.keys(v).length > 0, { message: "Nothing to update" });
+
+export const commentSchema = z
+  .object({
+    body: z.string().trim().min(1).max(10_000),
+    authorType: z.enum(["CUSTOMER", "AGENT"]),
+    agentId: z.string().min(1).optional(),
+    internal: z.boolean().default(false),
+  })
+  .refine((c) => c.authorType === "CUSTOMER" || Boolean(c.agentId), {
+    message: "agentId is required for agent replies",
+    path: ["agentId"],
+  })
+  .refine((c) => c.authorType === "AGENT" || !c.internal, {
+    message: "Customers cannot post internal notes",
+    path: ["internal"],
+  });
+
+export type CommentInput = z.infer<typeof commentSchema>;
