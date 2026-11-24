@@ -13,6 +13,7 @@ function empty(): StatusCounts {
 
 /** Move one ticket between status buckets. `from` is null for new tickets. */
 export async function bumpStatus(from: Status | null, to: Status): Promise<void> {
+  if (from === to) return;
   try {
     const tx = redis.multi();
     if (from) tx.hincrby(KEY, from, -1);
@@ -29,7 +30,7 @@ export async function getStatusCounts(): Promise<StatusCounts> {
     const raw = await redis.hgetall(KEY);
     if (Object.keys(raw).length > 0) {
       const counts = empty();
-      for (const s of STATUSES) counts[s] = Number(raw[s] ?? 0);
+      for (const s of STATUSES) counts[s] = Math.max(0, Number(raw[s] ?? 0));
       return counts;
     }
   } catch {

@@ -30,3 +30,11 @@ export function statusAfterComment(current: Status, authorType: "CUSTOMER" | "AG
   if (authorType === "AGENT" && current === "OPEN") return "PENDING";
   return current;
 }
+
+/** resolvedAt is set when a ticket gets resolved and cleared when it is re-opened. */
+export function resolvedAtFor(from: Status, to: Status, now = new Date()): Date | null | undefined {
+  if (from === to) return undefined;
+  if (to === "RESOLVED") return now;
+  if (to === "OPEN" || to === "PENDING") return null;
+  return undefined;
+}

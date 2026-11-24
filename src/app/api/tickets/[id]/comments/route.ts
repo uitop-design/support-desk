@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { commentSchema } from "@/lib/validation";
-import { statusAfterComment } from "@/lib/workflow";
+import { resolvedAtFor, statusAfterComment } from "@/lib/workflow";
 import { bumpStatus } from "@/lib/counters";
 import { enqueueNotification } from "@/lib/notifications";
 
@@ -24,7 +24,10 @@ export async function POST(req: NextRequest, { params }: Ctx) {
 
   const [comment] = await prisma.$transaction([
     prisma.comment.create({ data: { ticketId: id, body, authorType, agentId, internal } }),
-    prisma.ticket.update({ where: { id }, data: { status: nextStatus } }),
+    prisma.ticket.update({
+      where: { id },
+      data: { status: nextStatus, resolvedAt: resolvedAtFor(ticket.status, nextStatus) },
+    }),
   ]);
   await bumpStatus(ticket.status, nextStatus);
   if (authorType === "AGENT" && !internal) {
