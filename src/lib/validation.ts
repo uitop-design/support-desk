@@ -22,3 +22,11 @@ export const ticketListSchema = z.object({
 
 export type TicketCreate = z.infer<typeof ticketCreateSchema>;
 export type TicketListQuery = z.infer<typeof ticketListSchema>;
+
+export const ticketUpdateSchema = z
+  .object({
+    status: z.enum(STATUSES).optional(),
+    priority: z.enum(PRIORITIES).optional(),
+    assigneeId: z.string().min(1).nullable().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "Nothing to update" });
