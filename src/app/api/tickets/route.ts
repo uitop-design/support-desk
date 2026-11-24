@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { ticketCreateSchema, ticketListSchema } from "@/lib/validation";
 import { bumpStatus } from "@/lib/counters";
 import { enqueueNotification } from "@/lib/notifications";
+import { pickAssignee } from "@/lib/assign";
 
 export async function GET(req: NextRequest) {
   const parsed = ticketListSchema.safeParse(Object.fromEntries(req.nextUrl.searchParams));
@@ -40,7 +41,8 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   const parsed = ticketCreateSchema.safeParse(await req.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
-  const ticket = await prisma.ticket.create({ data: parsed.data });
+  const assigneeId = process.env.AUTO_ASSIGN === "false" ? null : await pickAssignee();
+  const ticket = await prisma.ticket.create({ data: { ...parsed.data, assigneeId } });
   await bumpStatus(null, ticket.status);
   await enqueueNotification({
     type: "ticket.created",
