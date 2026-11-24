@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { prisma } from "@/lib/prisma";
+import { getTicket, listActiveAgents } from "@/lib/tickets";
 import { allowedNext } from "@/lib/workflow";
 import { PriorityBadge, StatusBadge } from "@/components/Badges";
 import { TicketControls } from "@/components/TicketControls";
@@ -11,13 +11,7 @@ const fmt = new Intl.DateTimeFormat("en-GB", { dateStyle: "medium", timeStyle: "
 
 export default async function TicketPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const [ticket, agents] = await Promise.all([
-    prisma.ticket.findUnique({
-      where: { id },
-      include: { comments: { orderBy: { createdAt: "asc" }, include: { agent: { select: { name: true } } } } },
-    }),
-    prisma.agent.findMany({ where: { active: true }, select: { id: true, name: true }, orderBy: { name: "asc" } }),
-  ]);
+  const [ticket, agents] = await Promise.all([getTicket(id), listActiveAgents()]);
   if (!ticket) notFound();
 
   return (

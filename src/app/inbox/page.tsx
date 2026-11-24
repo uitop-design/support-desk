@@ -1,9 +1,8 @@
 import Link from "next/link";
-import type { Prisma } from "@prisma/client";
-import { prisma } from "@/lib/prisma";
 import { ticketListSchema, STATUSES, PRIORITIES } from "@/lib/validation";
 import { PriorityBadge, StatusBadge } from "@/components/Badges";
 import { getStatusCounts } from "@/lib/counters";
+import { listActiveAgents, listTickets } from "@/lib/tickets";
 
 export const dynamic = "force-dynamic";
 
@@ -16,22 +15,9 @@ export default async function InboxPage({ searchParams }: { searchParams: Search
   const parsed = ticketListSchema.safeParse(raw);
   const f = parsed.success ? parsed.data : ticketListSchema.parse({});
 
-  const where: Prisma.TicketWhereInput = {
-    status: f.status,
-    priority: f.priority,
-    ...(f.assignee === "unassigned" ? { assigneeId: null } : f.assignee ? { assigneeId: f.assignee } : {}),
-    ...(f.q ? { subject: { contains: f.q, mode: "insensitive" } } : {}),
-  };
-
-  const [tickets, agents, counts] = await Promise.all([
-    prisma.ticket.findMany({
-      where,
-      include: { assignee: { select: { name: true } } },
-      orderBy: { updatedAt: "desc" },
-      take: f.limit,
-      skip: (f.page - 1) * f.limit,
-    }),
-    prisma.agent.findMany({ where: { active: true }, orderBy: { name: "asc" } }),
+  const [{ items: tickets }, agents, counts] = await Promise.all([
+    listTickets(f),
+    listActiveAgents(),
     getStatusCounts(),
   ]);
 
