@@ -10,7 +10,8 @@
     "db:migrate": "prisma migrate dev",
     "postinstall": "prisma generate",
     "db:seed": "prisma db seed",
-    "worker:notify": "tsx scripts/notify-worker.ts"
+    "worker:notify": "tsx scripts/notify-worker.ts",
+    "test": "vitest run"
   },
   "dependencies": {
     "next": "15.0.3",
@@ -26,7 +27,8 @@
     "@types/react-dom": "^19.0.0",
     "typescript": "^5.6.3",
     "prisma": "^5.22.0",
-    "tsx": "^4.19.2"
+    "tsx": "^4.19.2",
+    "vitest": "^2.1.5"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
