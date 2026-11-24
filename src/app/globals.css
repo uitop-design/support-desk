@@ -7,3 +7,16 @@ a { color: var(--brand); text-decoration: none; }
 .main { max-width: 1100px; margin: 0 auto; padding: 24px; }
 .hero { text-align: center; padding: 64px 0; }
 .btn { display: inline-block; background: var(--brand); color: #fff; padding: 8px 16px; border-radius: 6px; border: 0; cursor: pointer; font: inherit; }
+.muted { color: var(--muted); }
+.filters { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+.filters input, .filters select { padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; font: inherit; background: #fff; }
+.table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid var(--line); }
+.table th, .table td { padding: 10px 12px; border-bottom: 1px solid var(--line); text-align: left; }
+.table th { font-size: 0.8rem; text-transform: uppercase; color: var(--muted); }
+.badge { display: inline-block; padding: 1px 8px; border-radius: 999px; font-size: 0.75rem; background: #f3f4f6; }
+.status-open { background: #dbeafe; color: #1e40af; }
+.status-pending { background: #fef3c7; color: #92400e; }
+.status-resolved { background: #dcfce7; color: #166534; }
+.status-closed { background: #e5e7eb; color: #374151; }
+.prio-high { background: #ffedd5; color: #9a3412; }
+.prio-urgent { background: #fee2e2; color: #991b1b; }
