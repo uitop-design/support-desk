@@ -82,16 +82,17 @@ export async function createTicket(input: TicketCreate) {
 }
 
 export async function updateTicket(id: string, patch: TicketUpdate) {
-  const current = await prisma.ticket.findUnique({ where: { id }, select: { status: true } });
+  const current = await prisma.ticket.findUnique({ where: { id }, select: { status: true, assigneeId: true } });
   if (!current) throw new TicketError("NOT_FOUND", "Ticket not found");
 
   const { status, priority, assigneeId } = patch;
   if (status && !canTransition(current.status, status)) {
     throw new TicketError("BAD_TRANSITION", `Cannot move ticket from ${current.status} to ${status}`);
   }
+  let newAssignee: { email: string } | null = null;
   if (assigneeId) {
-    const agent = await prisma.agent.findFirst({ where: { id: assigneeId, active: true } });
-    if (!agent) throw new TicketError("UNKNOWN_AGENT", "Unknown or inactive agent");
+    newAssignee = await prisma.agent.findFirst({ where: { id: assigneeId, active: true }, select: { email: true } });
+    if (!newAssignee) throw new TicketError("UNKNOWN_AGENT", "Unknown or inactive agent");
   }
 
   const ticket = await prisma.ticket.update({
@@ -104,6 +105,15 @@ export async function updateTicket(id: string, patch: TicketUpdate) {
     },
   });
   if (status) await bumpStatus(current.status, status);
+  if (newAssignee && assigneeId !== current.assigneeId) {
+    await enqueueNotification({
+      type: "ticket.assigned",
+      ticketId: id,
+      to: newAssignee.email,
+      subject: `[#${ticket.number}] assigned to you: ${ticket.subject}`,
+      text: `Open the ticket in the inbox: /tickets/${id}`,
+    });
+  }
   return ticket;
 }
 
